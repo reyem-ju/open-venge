@@ -87,7 +87,7 @@ export const WEAPONS = {
     falloffStart: 30,
     falloffEnd: 70,
     minMult: 0.6,
-    adsFov: 72,
+    adsFov: 55,
     switchMs: 400,
   }),
   shotgun: W({
@@ -109,7 +109,7 @@ export const WEAPONS = {
     falloffStart: 8,
     falloffEnd: 22,
     minMult: 0.25,
-    adsFov: 78,
+    adsFov: 65,
     switchMs: 400,
   }),
   sniper: W({
@@ -153,7 +153,7 @@ export const WEAPONS = {
     falloffStart: 20,
     falloffEnd: 45,
     minMult: 0.7,
-    adsFov: 75,
+    adsFov: 65,
     switchMs: 300,
   }),
 } satisfies Record<string, WeaponConfig>;

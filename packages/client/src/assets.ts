@@ -16,7 +16,7 @@ const GUN_LENGTH: Record<WeaponId, number> = {
   pistol: 0.42,
 };
 
-const CHAR_FILES = ['a', 'b', 'c', 'd'];
+const CHAR_FILES = ['Soldier.glb', 'Xbot.glb'];
 const CHAR_HEIGHT = 1.8;
 
 const TEX_FILES: Record<string, string> = {
@@ -28,11 +28,15 @@ const TEX_FILES: Record<string, string> = {
   purple: 'assets/tex/purple.png',
 };
 
+export interface CharModel {
+  scene: THREE.Group;
+  clips: Record<string, THREE.AnimationClip>;
+}
+
 export interface Assets {
   ready: boolean;
   guns: Map<WeaponId, THREE.Group>;
-  chars: THREE.Group[];
-  clips: Record<string, THREE.AnimationClip>;
+  chars: CharModel[];
   tex: Record<string, THREE.Texture>;
 }
 
@@ -45,14 +49,21 @@ function fitToSize(root: THREE.Object3D, size: number, axis: 'y' | 'z'): THREE.G
   root.scale.setScalar(scale);
   const scaled = new THREE.Box3().setFromObject(root);
   const center = scaled.getCenter(new THREE.Vector3());
-  root.position.sub(center);
-  if (axis === 'y') root.position.y += (scaled.max.y - scaled.min.y) / 2;
+  root.position.x -= center.x;
+  root.position.z -= center.z;
+  root.position.y -= scaled.min.y;
   holder.add(root);
   return holder;
 }
 
+function clipMap(animations: THREE.AnimationClip[]): Record<string, THREE.AnimationClip> {
+  const out: Record<string, THREE.AnimationClip> = {};
+  for (const clip of animations) out[clip.name.toLowerCase()] = clip;
+  return out;
+}
+
 export async function loadAssets(): Promise<Assets> {
-  const out: Assets = { ready: false, guns: new Map(), chars: [], clips: {}, tex: {} };
+  const out: Assets = { ready: false, guns: new Map(), chars: [], tex: {} };
   const gltf = new GLTFLoader();
   const texLoader = new THREE.TextureLoader();
   const jobs: Promise<void>[] = [];
@@ -72,16 +83,13 @@ export async function loadAssets(): Promise<Assets> {
     );
   }
 
-  for (let i = 0; i < CHAR_FILES.length; i++) {
+  for (const file of CHAR_FILES) {
     jobs.push(
       gltf
-        .loadAsync(`assets/chars/character-${CHAR_FILES[i]}.glb`)
+        .loadAsync(`assets/chars/${file}`)
         .then((g) => {
-          const root = fitToSize(g.scene, CHAR_HEIGHT, 'y');
-          out.chars.push(root);
-          if (i === 0) {
-            for (const clip of g.animations) out.clips[clip.name] = clip;
-          }
+          const scene = fitToSize(g.scene, CHAR_HEIGHT, 'y');
+          out.chars.push({ scene, clips: clipMap(g.animations) });
         })
         .catch(() => {}),
     );

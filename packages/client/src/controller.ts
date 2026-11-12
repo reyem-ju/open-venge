@@ -30,6 +30,7 @@ export class Controller {
     add(document, 'mousemove', (e) => this.onMouseMove(e as MouseEvent));
     add(document, 'mouseup', (e) => this.onMouseUp(e as MouseEvent));
     add(canvas, 'mousedown', (e) => this.onMouseDown(e as MouseEvent));
+    add(document, 'wheel', (e) => this.onWheel(e as WheelEvent));
     add(canvas, 'contextmenu', (e) => e.preventDefault());
     add(document, 'pointerlockchange', () => {
       this.locked = document.pointerLockElement === this.canvas;
@@ -67,6 +68,11 @@ export class Controller {
       return;
     }
     this.keys.delete(e.code);
+  }
+
+  private onWheel(e: WheelEvent): void {
+    if (!this.locked || e.deltaY === 0) return;
+    this.onWeaponSwitch(e.deltaY > 0 ? 'secondary' : 'primary');
   }
 
   private onMouseDown(e: MouseEvent): void {

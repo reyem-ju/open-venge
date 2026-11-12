@@ -59,11 +59,10 @@ export function buildViewmodel(weapon: WeaponId, assets: Assets): THREE.Group {
   if (!model) return buildPrimitiveViewmodel(weapon);
   const holder = new THREE.Group();
   const gun = model.clone(true);
-  gun.rotation.set(0, Math.PI, 0);
-  gun.position.set(0, 0, 0);
+  gun.position.set(0, -0.08, 0);
   holder.add(gun);
-  holder.position.set(0.3, -0.27, -0.55);
-  holder.rotation.set(0.03, 0.06, 0);
+  holder.position.set(0.3, -0.3, -0.55);
+  holder.rotation.set(0.03, 0.05, 0);
   return holder;
 }
 

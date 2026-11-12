@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { lerpAngle } from '@open-venge/shared';
+import { clone as skeletonClone } from 'three/examples/jsm/utils/SkeletonUtils.js';
+import { lerpAngle, clamp } from '@open-venge/shared';
 import type { Assets } from './assets';
 import type { WeaponId } from '@open-venge/shared';
 
@@ -15,8 +16,7 @@ export function colorForId(id: number): number {
 interface RigActions {
   idle: THREE.AnimationAction | null;
   walk: THREE.AnimationAction | null;
-  sprint: THREE.AnimationAction | null;
-  shoot: THREE.AnimationAction | null;
+  run: THREE.AnimationAction | null;
 }
 
 export interface CharacterRig {
@@ -32,6 +32,9 @@ export interface CharacterRig {
   lastYaw: number;
 }
 
+const WALK_REF_SPEED = 1.9;
+const RUN_REF_SPEED = 5.6;
+
 function makeNameTag(name: string): THREE.Sprite {
   const canvas = document.createElement('canvas');
   canvas.width = 256;
@@ -46,35 +49,43 @@ function makeNameTag(name: string): THREE.Sprite {
   ctx.fillText(name, 128, 34);
   const tex = new THREE.CanvasTexture(canvas);
   const sprite = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }),
+    new THREE.SpriteMaterial({ map: tex, depthTest: true, depthWrite: false, transparent: true }),
   );
   sprite.scale.set(2.2, 0.55, 1);
   return sprite;
 }
 
-function tint(root: THREE.Object3D, color: number): void {
+function tintAndShadow(root: THREE.Object3D, color: number): void {
   root.traverse((o) => {
     if (o instanceof THREE.Mesh) {
-      const mats = Array.isArray(o.material) ? o.material : [o.material];
-      for (const m of mats) {
-        if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) {
-          m.color = new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.35);
+      o.material = (Array.isArray(o.material) ? o.material : [o.material]).map((m) => {
+        const c = m.clone();
+        if (c instanceof THREE.MeshStandardMaterial || c instanceof THREE.MeshLambertMaterial) {
+          c.color = new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.45);
         }
-      }
+        return c;
+      });
       o.castShadow = true;
+      o.receiveShadow = false;
     }
   });
 }
 
-function attachGun(model: THREE.Object3D, assets: Assets, weapon: WeaponId): void {
-  const gun = assets.guns.get(weapon) ?? assets.guns.get('rifle');
-  const arm = model.getObjectByName('arm-right');
-  if (!gun || !arm) return;
+function attachGun(model: THREE.Object3D, assets: Assets): void {
+  const gun = assets.guns.get('rifle');
+  const hand = model.getObjectByName('mixamorigRightHand');
+  if (!gun || !hand) return;
+  model.updateMatrixWorld(true);
+  const qh = new THREE.Quaternion();
+  const ws = new THREE.Vector3();
+  hand.matrixWorld.decompose(new THREE.Vector3(), qh, ws);
   const held = gun.clone(true);
-  held.scale.setScalar(0.85);
-  held.position.set(0.05, -0.5, 0.15);
-  held.rotation.set(0, 0, 0);
-  arm.add(held);
+  held.scale.setScalar(0.55);
+  held.quaternion.copy(qh.invert());
+  const wrapper = new THREE.Group();
+  wrapper.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
+  wrapper.add(held);
+  hand.add(wrapper);
 }
 
 export function createCharacter(id: number, name: string, assets: Assets): CharacterRig {
@@ -83,16 +94,17 @@ export function createCharacter(id: number, name: string, assets: Assets): Chara
   const tag = makeNameTag(name);
   tag.position.y = 2.25;
 
-  const model = assets.chars.length > 0 ? assets.chars[id % assets.chars.length].clone(true) : null;
-  if (model) {
+  const base = assets.chars.length > 0 ? assets.chars[id % assets.chars.length] : null;
+  if (base) {
+    const model = skeletonClone(base.scene) as THREE.Group;
     model.rotation.y = Math.PI;
-    tint(model, color);
-    attachGun(model, assets, 'rifle');
+    tintAndShadow(model, color);
+    attachGun(model, assets);
     group.add(model);
     const mixer = new THREE.AnimationMixer(model);
     const mk = (n: string): THREE.AnimationAction | null =>
-      assets.clips[n] ? mixer.clipAction(assets.clips[n]) : null;
-    const actions: RigActions = { idle: mk('idle'), walk: mk('walk'), sprint: mk('sprint'), shoot: mk('holding-right-shoot') };
+      base.clips[n] ? mixer.clipAction(base.clips[n]) : null;
+    const actions: RigActions = { idle: mk('idle'), walk: mk('walk'), run: mk('run') };
     actions.idle?.play();
     group.add(tag);
     return { group, torso: null, legL: null, legR: null, tag, mixer, actions, current: 'idle', walkPhase: 0, lastYaw: 0 };
@@ -129,7 +141,7 @@ export function createCharacter(id: number, name: string, assets: Assets): Chara
   group.add(legR);
   group.add(tag);
 
-  return { group, torso, legL, legR, tag, mixer: null, actions: { idle: null, walk: null, sprint: null, shoot: null }, current: 'idle', walkPhase: 0, lastYaw: 0 };
+  return { group, torso, legL, legR, tag, mixer: null, actions: { idle: null, walk: null, run: null }, current: 'idle', walkPhase: 0, lastYaw: 0 };
 }
 
 function crossfade(rig: CharacterRig, next: string): void {
@@ -161,8 +173,13 @@ export function updateCharacter(
   rig.lastYaw = rig.group.rotation.y;
 
   if (rig.mixer) {
-    const move = speed > 5.5 ? 'sprint' : speed > 0.5 ? 'walk' : 'idle';
-    crossfade(rig, ads && rig.actions.shoot ? 'shoot' : move);
+    const next = speed > 4.5 ? 'run' : speed > 0.4 ? 'walk' : 'idle';
+    crossfade(rig, next);
+    const active = rig.actions[next as keyof RigActions];
+    if (active) {
+      const ref = next === 'run' ? RUN_REF_SPEED : next === 'walk' ? WALK_REF_SPEED : 1;
+      active.timeScale = clamp(speed / ref, 0.7, 1.7);
+    }
     rig.mixer.update(dt);
     return;
   }
@@ -177,4 +194,5 @@ export function updateCharacter(
     rig.legL!.rotation.x *= 0.8;
     rig.legR!.rotation.x *= 0.8;
   }
+  void ads;
 }
