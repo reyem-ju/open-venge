@@ -1,4 +1,5 @@
 import { WEAPONS, type ServerMsg, type WeaponId } from '@open-venge/shared';
+import { loadAssets } from './assets';
 import { Sfx } from './audio';
 import { Game } from './game';
 import { HUD } from './hud';
@@ -14,6 +15,7 @@ const menuError = document.getElementById('menu-error')!;
 
 const settings = loadSettings();
 const sfx = new Sfx();
+const assetsPromise = loadAssets();
 nameInput.value = settings.name;
 
 let game: Game | null = null;
@@ -78,6 +80,8 @@ async function startPlay(): Promise<void> {
   playBtn.textContent = 'CONNECTING...';
   menuError.textContent = '';
 
+  const assets = await assetsPromise;
+
   net = new NetClient();
   let started = false;
   let buffer: ServerMsg[] = [];
@@ -102,7 +106,7 @@ async function startPlay(): Promise<void> {
         started = true;
         try {
           hud = new HUD();
-          game = new Game(canvas, net!, sfx, hud, settings, msg.map, msg.id);
+          game = new Game(canvas, net!, sfx, hud, settings, msg.map, msg.id, assets);
         } catch (err) {
           showError(`Failed to start game: ${(err as Error).message}`);
           net?.disconnect();

@@ -16,6 +16,7 @@ An open-source, browser-based multiplayer arena FPS in the spirit of fast, pick-
 - **Quake-style movement** — ground friction, air control, step-up stairs, bunny-hop friendly jump
 - **Full HUD** — health, ammo, dynamic crosshair, hitmarkers, directional damage indicators, killfeed, scoreboard, respawn/match-end overlays
 - **Procedural audio** — every sound is synthesized at runtime with WebAudio; zero binary assets
+- **Hand-crafted 3D assets** — animated blocky characters, weapon models, and prototype textures (CC0, see Assets)
 - **Anti-cheat basics** — server-side validation of all inputs, rate limiting, clamped movement, authoritative ammo/health
 - **One-command deploy** — Docker image with the client served by the game server
 
@@ -104,6 +105,10 @@ GitHub Actions runs all three on every push and pull request.
 ## Contributing
 
 PRs are welcome. Keep changes focused, run `npm run typecheck && npm test` before pushing, and match the existing TypeScript style. Good first areas: additional maps (pure data in `packages/shared/src/maps/`), new weapons (one entry in `WEAPONS` + a viewmodel), and game modes (extend `Room` phase logic).
+
+## Assets
+
+The 3D models and textures bundled in `packages/client/public/assets/` are **CC0** (public domain) works by [Kenney](https://kenney.nl) — [Blaster Kit](https://kenney.nl/assets/blaster-kit), [Blocky Characters](https://kenney.nl/assets/blocky-characters), and [Prototype Textures](https://kenney.nl/assets/prototype-textures) — included here with resized textures. `assets/License.txt` is Kenney's license file. All code remains MIT.
 
 ## License
 

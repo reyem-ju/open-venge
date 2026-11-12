@@ -21,6 +21,7 @@ import {
   type WeaponId,
 } from '@open-venge/shared';
 import { Sfx } from './audio';
+import type { Assets } from './assets';
 import { colorForId, createCharacter, updateCharacter, type CharacterRig } from './character';
 import { Controller } from './controller';
 import { Effects } from './effects';
@@ -95,18 +96,24 @@ export class Game {
     private settings: Settings,
     map: GameMap,
     myId: number,
+    private assets: Assets,
   ) {
     this.myId = myId;
     this.dead = true;
     this.world = { boxes: toCollisionBoxes(map) };
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.05, 400);
+    this.camera = new THREE.PerspectiveCamera(settings.fov, window.innerWidth / window.innerHeight, 0.05, 500);
     this.camera.rotation.order = 'YXZ';
-    buildWorld(this.scene, map);
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.15;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    buildWorld(this.scene, map, this.assets);
     this.effects = new Effects(this.scene);
-    this.scene.add(this.vmHolder);
+    this.camera.add(this.vmHolder);
+    this.scene.add(this.camera);
     this.controller = new Controller(canvas, settings);
     this.fovCurrent = settings.fov;
 
@@ -288,7 +295,7 @@ export class Game {
     this.slot = slot;
     if (this.viewmodel) this.vmHolder.remove(this.viewmodel);
     const weapon: WeaponId = slot === 'primary' ? this.settings.loadout : 'pistol';
-    this.viewmodel = buildViewmodel(weapon);
+    this.viewmodel = buildViewmodel(weapon, this.assets);
     this.vmHolder.add(this.viewmodel);
     this.reloading = false;
     const w = WEAPONS[weapon];
@@ -451,7 +458,7 @@ export class Game {
       seen.add(pb.id);
       let entry = this.rigs.get(pb.id);
       if (!entry) {
-        entry = { rig: createCharacter(pb.id, pb.name), speed: 0 };
+        entry = { rig: createCharacter(pb.id, pb.name, this.assets), speed: 0 };
         this.scene.add(entry.rig.group);
         this.rigs.set(pb.id, entry);
       }
@@ -463,7 +470,7 @@ export class Game {
       const pitch = lerp(pa.pitch, pb.pitch, t);
       const moved = Math.hypot(pb.x - pa.x, pb.z - pa.z) / (span / 1000);
       entry.speed = lerp(entry.speed, Math.min(moved, 12), 0.3);
-      updateCharacter(entry.rig, x, y, z, yaw, pitch, entry.speed, (pb.flags & 1) !== 0, dt);
+      updateCharacter(entry.rig, x, y, z, yaw, pitch, entry.speed, (pb.flags & 1) !== 0, (pb.flags & 2) !== 0, dt);
     }
     for (const [id, entry] of this.rigs) {
       if (!seen.has(id)) {

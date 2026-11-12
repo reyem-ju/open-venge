@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { WeaponId } from '@open-venge/shared';
+import type { Assets } from './assets';
 
 function part(
   parent: THREE.Object3D,
@@ -20,7 +21,7 @@ function part(
   return mesh;
 }
 
-export function buildViewmodel(weapon: WeaponId): THREE.Group {
+export function buildPrimitiveViewmodel(weapon: WeaponId): THREE.Group {
   const g = new THREE.Group();
   const dark = 0x24282e;
   const metal = 0x3c434c;
@@ -51,6 +52,19 @@ export function buildViewmodel(weapon: WeaponId): THREE.Group {
       break;
   }
   return g;
+}
+
+export function buildViewmodel(weapon: WeaponId, assets: Assets): THREE.Group {
+  const model = assets.guns.get(weapon);
+  if (!model) return buildPrimitiveViewmodel(weapon);
+  const holder = new THREE.Group();
+  const gun = model.clone(true);
+  gun.rotation.set(0, Math.PI, 0);
+  gun.position.set(0, 0, 0);
+  holder.add(gun);
+  holder.position.set(0.3, -0.27, -0.55);
+  holder.rotation.set(0.03, 0.06, 0);
+  return holder;
 }
 
 export function muzzleOffset(weapon: WeaponId): THREE.Vector3 {
