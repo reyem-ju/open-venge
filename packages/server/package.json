@@ -1,0 +1,20 @@
+{
+  "name": "@open-venge/server",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --external:ws --outfile=dist/index.js",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.13",
+    "esbuild": "^0.24.2"
+  }
+}

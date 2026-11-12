@@ -1,0 +1,26 @@
+{
+  "name": "open-venge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Open-source browser multiplayer arena FPS. Three.js client, authoritative Node.js server.",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "dev": "npm run watch --workspace @open-venge/client & npm run dev --workspace @open-venge/server & wait",
+    "start": "npm run start --workspace @open-venge/server"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

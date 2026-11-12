@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>open-venge — browser arena FPS</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <canvas id="game"></canvas>
+
+  <div id="hud" class="hidden">
+    <div id="crosshair"><span class="ch t"></span><span class="ch b"></span><span class="ch l"></span><span class="ch r"></span></div>
+    <div id="hitmarker">✕</div>
+    <div id="damage-vignette"></div>
+    <div id="dir-indicators"></div>
+    <div id="scope-overlay"></div>
+
+    <div id="top-bar">
+      <div id="timer">10:00</div>
+      <div id="top-score"></div>
+    </div>
+    <div id="killfeed"></div>
+
+    <div id="bottom-left">
+      <div id="health-num">100</div>
+      <div id="health-bar-wrap"><div id="health-bar"></div></div>
+    </div>
+    <div id="bottom-right">
+      <div id="weapon-name"></div>
+      <div id="ammo"><span id="ammo-num">30</span><span id="ammo-mag">/ 30</span></div>
+    </div>
+
+    <div id="fps-ping"></div>
+
+    <div id="scoreboard"><h2>Scoreboard</h2><div id="scoreboard-body"></div></div>
+
+    <div id="respawn-overlay">
+      <div class="ro-title">YOU DIED</div>
+      <div id="respawn-count">3</div>
+      <div id="respawn-killer"></div>
+    </div>
+
+    <div id="end-screen"><h2>MATCH OVER</h2><div id="end-body"></div></div>
+    <div id="resume-hint">Click to play</div>
+  </div>
+
+  <div id="menu">
+    <div class="menu-card">
+      <h1>OPEN<span>VENGE</span></h1>
+      <p class="tagline">Open-source browser arena FPS</p>
+      <input id="name-input" maxlength="16" placeholder="Player name" autocomplete="off">
+      <div id="loadout">
+        <div class="loadout-card" data-weapon="rifle">
+          <div class="lc-name">VX-9 Rifle</div>
+          <div class="lc-stat">Auto · 24 dmg</div>
+        </div>
+        <div class="loadout-card" data-weapon="shotgun">
+          <div class="lc-name">BR-12 Shotgun</div>
+          <div class="lc-stat">8 pellets · close range</div>
+        </div>
+        <div class="loadout-card" data-weapon="sniper">
+          <div class="lc-name">LR-50 Marksman</div>
+          <div class="lc-stat">95 dmg · scoped</div>
+        </div>
+      </div>
+      <button id="play-btn">PLAY</button>
+      <div id="menu-error"></div>
+      <div class="settings">
+        <label>Sensitivity <input type="range" id="sens" min="0.1" max="3" step="0.05" value="1"><span id="sens-val"></span></label>
+        <label>Field of view <input type="range" id="fov" min="70" max="110" step="1" value="90"><span id="fov-val"></span></label>
+        <label>Volume <input type="range" id="vol" min="0" max="1" step="0.05" value="0.7" data-fmt="pct"><span id="vol-val"></span></label>
+      </div>
+      <div class="controls">
+        WASD move · Space jump · LMB shoot · RMB aim · R reload · 1/2 weapons · Tab scores
+      </div>
+    </div>
+  </div>
+
+  <script src="/bundle.js"></script>
+</body>
+</html>
