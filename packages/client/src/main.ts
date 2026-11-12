@@ -90,6 +90,8 @@ async function startPlay(): Promise<void> {
     }
     hudEl.classList.add('hidden');
     menu.classList.remove('hidden');
+    playBtn.disabled = false;
+    playBtn.textContent = 'PLAY';
     showError('Disconnected from server');
     net = null;
   };
@@ -98,11 +100,18 @@ async function startPlay(): Promise<void> {
     if (!started) {
       if (msg.t === 'welcome') {
         started = true;
-        hud = new HUD();
-        game = new Game(canvas, net!, sfx, hud, settings, msg.map, msg.id);
+        try {
+          hud = new HUD();
+          game = new Game(canvas, net!, sfx, hud, settings, msg.map, msg.id);
+        } catch (err) {
+          showError(`Failed to start game: ${(err as Error).message}`);
+          net?.disconnect();
+          return;
+        }
         hudEl.classList.remove('hidden');
         menu.classList.add('hidden');
-        net!.send({ t: 'join', name: settings.name, loadout: settings.loadout });
+        playBtn.disabled = false;
+        playBtn.textContent = 'PLAY';
         for (const buffered of buffer) game.handleMessage(buffered);
         buffer = [];
       } else if (msg.t === 'reject') {
@@ -119,8 +128,11 @@ async function startPlay(): Promise<void> {
 
   try {
     await net.connect(wsUrl());
+    net.send({ t: 'join', name: settings.name, loadout: settings.loadout });
   } catch {
     showError('Could not connect to server');
     net = null;
+    playBtn.disabled = false;
+    playBtn.textContent = 'PLAY';
   }
 }
