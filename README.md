@@ -108,7 +108,12 @@ PRs are welcome. Keep changes focused, run `npm run typecheck && npm test` befor
 
 ## Assets
 
-The 3D models and textures bundled in `packages/client/public/assets/` are **CC0** (public domain) works by [Kenney](https://kenney.nl) — [Blaster Kit](https://kenney.nl/assets/blaster-kit), [Blocky Characters](https://kenney.nl/assets/blocky-characters), and [Prototype Textures](https://kenney.nl/assets/prototype-textures) — included here with resized textures. `assets/License.txt` is Kenney's license file. All code remains MIT.
+The assets bundled in `packages/client/public/assets/`:
+
+- **Weapons** ([Blaster Kit](https://kenney.nl/assets/blaster-kit)) and **textures** ([Prototype Textures](https://kenney.nl/assets/prototype-textures), resized to 256px) — **CC0** (public domain) by [Kenney](https://kenney.nl); `assets/License.txt` is Kenney's license file
+- **Characters** (`Soldier.glb`, `Xbot.glb`) — from the [three.js examples](https://github.com/mrdoob/three.js/tree/master/examples/models/gltf) (MIT-licensed repository)
+
+All code remains MIT.
 
 ## License
 
