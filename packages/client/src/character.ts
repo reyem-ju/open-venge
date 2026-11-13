@@ -56,17 +56,21 @@ function makeNameTag(name: string): THREE.Sprite {
 }
 
 function tintAndShadow(root: THREE.Object3D, color: number): void {
+  const tint = (m: THREE.Material): THREE.Material => {
+    const c = m.clone();
+    if (c instanceof THREE.MeshStandardMaterial || c instanceof THREE.MeshLambertMaterial) {
+      c.color = new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.45);
+    }
+    return c;
+  };
   root.traverse((o) => {
     if (o instanceof THREE.Mesh) {
-      o.material = (Array.isArray(o.material) ? o.material : [o.material]).map((m) => {
-        const c = m.clone();
-        if (c instanceof THREE.MeshStandardMaterial || c instanceof THREE.MeshLambertMaterial) {
-          c.color = new THREE.Color(color).lerp(new THREE.Color(0xffffff), 0.45);
-        }
-        return c;
-      });
+      o.material = Array.isArray(o.material) ? o.material.map(tint) : tint(o.material);
       o.castShadow = true;
       o.receiveShadow = false;
+    }
+    if (o instanceof THREE.SkinnedMesh) {
+      o.frustumCulled = false;
     }
   });
 }

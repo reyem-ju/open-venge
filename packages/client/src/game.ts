@@ -54,6 +54,7 @@ export class Game {
   private viewmodel: THREE.Group | null = null;
 
   private pred: MoveState = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, onGround: true };
+  private viewErr = new THREE.Vector3();
   private pending: PendingInput[] = [];
   private tickAcc = 0;
 
@@ -206,19 +207,26 @@ export class Game {
     if (me) {
       const ack = snap.acks[String(this.myId)] ?? 0;
       this.pending = this.pending.filter((pi) => pi.seq > ack);
+      const prev = this.pred;
+      const prevViewX = prev.x + this.viewErr.x;
+      const prevViewY = prev.y + this.viewErr.y;
+      const prevViewZ = prev.z + this.viewErr.z;
       this.pred = {
         x: me.x,
         y: me.y,
         z: me.z,
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        onGround: true,
+        vx: prev.vx,
+        vy: prev.vy,
+        vz: prev.vz,
+        onGround: prev.onGround,
       };
       for (const pi of this.pending) {
         stepMove(this.pred, pi.mi, TICK_DT, this.world);
       }
+      this.viewErr.set(prevViewX - this.pred.x, prevViewY - this.pred.y, prevViewZ - this.pred.z);
+      this.viewErr.clampLength(0, 1);
       this.dead = (me.flags & 1) !== 0;
+      if (this.dead) this.viewErr.set(0, 0, 0);
       const idx = me.slot === 'primary' ? 0 : 1;
       if (performance.now() - this.lastFireMs > 250) {
         this.localAmmo[idx] = me.ammo;
@@ -411,7 +419,12 @@ export class Game {
       this.camera.updateProjectionMatrix();
     }
 
-    this.camera.position.set(this.pred.x, this.pred.y + PHYS.eyeHeight, this.pred.z);
+    this.viewErr.multiplyScalar(Math.max(0, 1 - dt * 8));
+    this.camera.position.set(
+      this.pred.x + this.viewErr.x,
+      this.pred.y + PHYS.eyeHeight + this.viewErr.y,
+      this.pred.z + this.viewErr.z,
+    );
     this.camera.rotation.set(this.controller.pitch + this.controller.recoilPitch, this.controller.yaw + this.controller.recoilYaw, 0);
 
     this.updateRemotes(dt);
